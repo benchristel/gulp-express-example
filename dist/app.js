@@ -13,21 +13,88 @@
     s(r[o]);
   }return s;
 })({ 1: [function (require, module, exports) {
-    'use strict';
+    var cache = {};
+    var registeredFactories = {};
+    var provender = {};
 
-    var greet = require('./greeter');
+    var Yavanna = {};
 
-    var englishGreeting = greet('Hello');
+    Yavanna.provide = function (name, factory) {
+      validateProvideArgs(name, factory);
 
-    console.log(englishGreeting('Satoshi'));
-  }, { "./greeter": 2 }], 2: [function (require, module, exports) {
-    var greet = function greet(greeting) {
-      return function (name) {
-        return greeting + ", " + name + ".";
-      };
+      registeredFactories[name] = factory;
+
+      Object.defineProperty(provender, name, {
+        get: function get() {
+          return Yavanna.get(name);
+        }
+      });
+
+      return factory;
     };
 
-    module.exports = greet;
-  }, {}], 3: [function (require, module, exports) {
-    require('./lib/foo');
-  }, { "./lib/foo": 1 }] }, {}, [3]);
+    Yavanna.get = function (name) {
+      validateGetArgs(name);
+
+      if (!cache[name]) {
+        cache[name] = registeredFactories[name](provender);
+      }
+
+      return cache[name];
+    };
+
+    function validateProvideArgs(name, factory) {
+      if (typeof name !== 'string') {
+        throw new Error('Yavanna.provide expects a name as the first argument.');
+      }
+
+      if (typeof factory !== 'function') {
+        throw Error('Yavanna.provide expects a factory function as the second argument. Check the declaration of `' + name + '`.');
+      }
+
+      if (registeredFactories[name]) {
+        throw Error('Yavanna: cannot override the previously registered factory for `' + name + '`.');
+      }
+    }
+
+    function validateGetArgs(name) {
+      if (!registeredFactories[name]) {
+        throw Error('Yavanna: no factory registered for `' + name + '`.');
+      }
+    }
+
+    module.exports = Yavanna;
+  }, {}], 2: [function (require, module, exports) {
+    ;(function () {
+      "use strict";
+
+      var Yavanna = require('@benchristel/yavanna');
+
+      Yavanna.provide('englishGreeting', function (inj) {
+        var greet = inj.greet;
+        return greet('Hello');
+      });
+    })();
+
+    ;(function () {
+      "use strict";
+
+      var Yavanna = require('@benchristel/yavanna');
+
+      Yavanna.provide('greet', function () {
+        return function (greeting) {
+          return function (name) {
+            return greeting + ", " + name + ".";
+          };
+        };
+      });
+    })();
+
+    ;(function () {
+      "use strict";
+
+      var Yavanna = require('@benchristel/yavanna');
+
+      console.log(Yavanna.get('englishGreeting')('Satoshi'));
+    })();
+  }, { "@benchristel/yavanna": 1 }] }, {}, [2]);

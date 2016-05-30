@@ -1,4 +1,6 @@
-const greet = require('../lib/greeter')
+const Yavanna = require('@benchristel/yavanna')
+
+const greet = Yavanna.get('greet')
 
 describe('English greeting', () => {
   var englishGreeting = greet('Hello')  
