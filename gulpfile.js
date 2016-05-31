@@ -1,3 +1,5 @@
+'use strict';
+
 const gulp = require('gulp')
 const iife = require('gulp-iife')
 const concat = require('gulp-concat')
@@ -6,11 +8,8 @@ const browserify = require('browserify')
 const babel = require('gulp-babel')
 const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
-const debug = require('gulp-debug')
-const webpack = require('gulp-webpack')
-const named = require('vinyl-named')
 
-compileES2015 = babel({presets: ['es2015']})
+const compileES2015 = babel({presets: ['es2015']})
 
 gulp.task('build', ['test', 'concat'], () => {
   browserify('./tmp/app.js')
