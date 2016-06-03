@@ -8,22 +8,29 @@ const browserify = require('browserify')
 const babel = require('gulp-babel')
 const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
+const uglify = require('gulp-uglify')
+const sourceMaps = require('gulp-sourcemaps')
 
 const compileES2015 = babel({presets: ['es2015']})
 
 gulp.task('build', ['test', 'concat'], () => {
-  browserify('./tmp/app.js')
+  browserify('./tmp/app.js', {debug: true})
     .bundle()
     .pipe(source('app.js'))
     .pipe(buffer())
-    .pipe(compileES2015)
+    .pipe(sourceMaps.init({loadMaps: true})) // todo verify loadMaps is needed
+      .pipe(compileES2015)
+      .pipe(uglify())
+    .pipe(sourceMaps.write())
     .pipe(gulp.dest('dist'))
 })
 
 gulp.task('concat', () => {
   gulp.src(['lib/**/*.js', './main.js'])
-    .pipe(iife())
-    .pipe(concat('app.js'))
+    .pipe(sourceMaps.init())
+      .pipe(iife())
+      .pipe(concat('app.js'))
+    .pipe(sourceMaps.write())
     .pipe(gulp.dest('tmp'))
 })
 
