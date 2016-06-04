@@ -26,7 +26,7 @@ gulp.task('build', ['test', 'concat'], () => {
 })
 
 gulp.task('concat', () => {
-  return gulp.src(['./prelude.js', 'lib/**/*.js', './main.js'])
+  return gulp.src(['src/prelude.js', 'src/lib/**/*.js', 'src/main.js'], {base: 'src'})
     .pipe(sourceMaps.init())
       .pipe(iife())
       .pipe(concat('app.js'))
