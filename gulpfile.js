@@ -14,7 +14,7 @@ const sourceMaps = require('gulp-sourcemaps')
 const compileES2015 = babel({presets: ['es2015']})
 
 gulp.task('build', ['test', 'concat'], () => {
-  browserify('./tmp/app.js', {debug: true})
+  return browserify('./tmp/app.js', {debug: true})
     .bundle()
     .pipe(source('app.js'))
     .pipe(buffer())
@@ -26,7 +26,7 @@ gulp.task('build', ['test', 'concat'], () => {
 })
 
 gulp.task('concat', () => {
-  gulp.src(['lib/**/*.js', './main.js'])
+  return gulp.src(['./prelude.js', 'lib/**/*.js', './main.js'])
     .pipe(sourceMaps.init())
       .pipe(iife())
       .pipe(concat('app.js'))
@@ -34,8 +34,8 @@ gulp.task('concat', () => {
     .pipe(gulp.dest('tmp'))
 })
 
-gulp.task('test', () => {
-  gulp.src(['lib/**/*.js', 'spec/**/*.js'])
+gulp.task('test', ['concat'], () => {
+  return gulp.src(['./tmp/app.js', 'spec/**/*.js'])
     .pipe(jasmine())
 })
 
