@@ -27,7 +27,7 @@ gulp.task('build', ['test', 'concat'], () => {
 
 gulp.task('concat', () => {
   gulp.src(['lib/**/*.js', './main.js'])
-    .pipe(sourceMaps.init({identityMap: true}))
+    .pipe(sourceMaps.init())
       .pipe(iife())
       .pipe(concat('app.js'))
     .pipe(sourceMaps.write())
