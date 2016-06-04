@@ -20,14 +20,14 @@ gulp.task('build', ['test', 'concat'], () => {
     .pipe(buffer())
     .pipe(sourceMaps.init({loadMaps: true})) // todo verify loadMaps is needed
       .pipe(compileES2015)
-      .pipe(uglify())
-    .pipe(sourceMaps.write())
+      .pipe(uglify({mangle: false})) // As of June 2016, browsers do not support mapping mangled names back to the original variable name when debugging. See https://bugs.chromium.org/p/chromium/issues/detail?id=327092
+    .pipe(sourceMaps.write('./'))
     .pipe(gulp.dest('dist'))
 })
 
 gulp.task('concat', () => {
   gulp.src(['lib/**/*.js', './main.js'])
-    .pipe(sourceMaps.init())
+    .pipe(sourceMaps.init({identityMap: true}))
       .pipe(iife())
       .pipe(concat('app.js'))
     .pipe(sourceMaps.write())
