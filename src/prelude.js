@@ -1,4 +1,4 @@
-const Yavanna = require('@benchristel/yavanna')
+const Yavanna = require('@benchristel/yavanna')()
 
-if (typeof window === 'object') window.Yavanna = Yavanna()
-if (typeof global === 'object') global.Yavanna = Yavanna()
+if (typeof window === 'object') window.Yavanna = Yavanna
+if (typeof global === 'object') global.Yavanna = Yavanna
