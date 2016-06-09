@@ -12,7 +12,8 @@ const uglify = require('gulp-uglify')
 const sourceMaps = require('gulp-sourcemaps')
 
 gulp.task('watch', () => {
-  return gulp.watch(['src/**/*.js', 'spec/**/*.js'], ['build'])
+  gulp.watch(['src/**/*.js'], ['build'])
+  gulp.watch(['spec/**/*.js'], ['test'])
 })
 
 gulp.task('build', ['test', 'concat'], () => {
