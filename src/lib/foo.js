@@ -1,7 +1,10 @@
 Yavanna.provide('englishGreeting', (inj) => {
   const greet = inj.greet
 
-  var a = 1, b = 1, sum = 0, next, i
+  var a = 1
+  var b = 1
+  var sum = 0
+  var next, i
 
   for (i = 0; i < 10; i++) {
     next = a + b
@@ -9,8 +12,6 @@ Yavanna.provide('englishGreeting', (inj) => {
     a = b
     b = next
   }
-
-  console.log(sum)
 
   return greet('Hello')
 })

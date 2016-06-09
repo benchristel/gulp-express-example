@@ -1,4 +1,3 @@
-Yavanna.provide('greet', () => 
+Yavanna.provide('greet', () =>
   greeting => name => `${greeting}, ${name}.`
 )
-
