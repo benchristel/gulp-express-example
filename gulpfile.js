@@ -12,6 +12,7 @@ const uglify = require('gulp-uglify')
 const sourceMaps = require('gulp-sourcemaps')
 
 gulp.task('watch', () => {
+  gulp.start('build')
   gulp.watch(['src/**/*.js'], ['build'])
   gulp.watch(['spec/**/*.js'], ['test'])
 })
