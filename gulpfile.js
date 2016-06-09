@@ -14,11 +14,11 @@ const esLint = require('gulp-eslint')
 
 gulp.task('watch', () => {
   gulp.start('build')
-  gulp.watch(['src/**/*.js'], ['build', 'lint'])
-  gulp.watch(['spec/**/*.js'], ['test', 'lint'])
+  gulp.watch(['src/**/*.js'], ['build'])
+  gulp.watch(['spec/**/*.js'], ['check'])
 })
 
-gulp.task('build', ['test', 'dist'])
+gulp.task('build', ['check', 'dist'])
 
 gulp.task('lint', () => {
   return gulp.src(['src/**/*.js', 'spec/**/*.js'])
@@ -48,6 +48,8 @@ gulp.task('concat', () => {
     .pipe(sourceMaps.write())
     .pipe(gulp.dest('tmp'))
 })
+
+gulp.task('check', ['test', 'lint'])
 
 gulp.task('test', ['compile-test-sources'], () => {
   return gulp.src(['tmp/test.js'])
