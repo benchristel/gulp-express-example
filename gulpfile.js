@@ -10,14 +10,21 @@ const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const sourceMaps = require('gulp-sourcemaps')
+const esLint = require('gulp-eslint')
 
 gulp.task('watch', () => {
   gulp.start('build')
-  gulp.watch(['src/**/*.js'], ['build'])
-  gulp.watch(['spec/**/*.js'], ['test'])
+  gulp.watch(['src/**/*.js'], ['build', 'lint'])
+  gulp.watch(['spec/**/*.js'], ['test', 'lint'])
 })
 
 gulp.task('build', ['test', 'dist'])
+
+gulp.task('lint', () => {
+  return gulp.src(['src/**/*.js', 'spec/**/*.js'])
+    .pipe(esLint())
+    .pipe(esLint.format())
+})
 
 gulp.task('dist', ['concat'], () => {
   const compileES2015 = babel({presets: ['es2015']})
