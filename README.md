@@ -1,5 +1,7 @@
 This repo is an experimentation ground for NodeJS build pipelines.
 
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
+
 ## Dev Dependencies
 
 ### Node 5
