@@ -98,7 +98,7 @@ gulp.task('dist', ['concat'], () => {
     .pipe(buffer())
     .pipe(sourceMaps.init({loadMaps: true}))
       .pipe(compileES2015)
-      .pipe(uglify({mangle: false})) // As of June 2016, browsers do not support mapping mangled names back to the original variable name when debugging. See https://bugs.chromium.org/p/chromium/issues/detail?id=327092
+      .pipe(uglify({mangle: false})) // As of June 2016, browser debuggers do not support mapping mangled names back to the original variable name. See https://bugs.chromium.org/p/chromium/issues/detail?id=327092
     .pipe(sourceMaps.write('./'))
     .pipe(gulp.dest(dirs.dist))
 })
