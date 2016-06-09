@@ -1,5 +1,3 @@
-const Yavanna = require('@benchristel/yavanna')
-
 const greet = Yavanna.get('greet')
 
 describe('English greeting', () => {

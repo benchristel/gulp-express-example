@@ -11,9 +11,13 @@ const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const sourceMaps = require('gulp-sourcemaps')
 
-const compileES2015 = babel({presets: ['es2015']})
+gulp.task('watch', () => {
+  return gulp.watch(['src/**/*.js', 'spec/**/*.js'], ['build'])
+})
 
 gulp.task('build', ['test', 'concat'], () => {
+  const compileES2015 = babel({presets: ['es2015']})
+
   return browserify('./tmp/app.js', {debug: true})
     .bundle()
     .pipe(source('app.js'))
