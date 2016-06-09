@@ -17,7 +17,9 @@ gulp.task('watch', () => {
   gulp.watch(['spec/**/*.js'], ['test'])
 })
 
-gulp.task('build', ['test', 'concat'], () => {
+gulp.task('build', ['test', 'dist'])
+
+gulp.task('dist', ['concat'], () => {
   const compileES2015 = babel({presets: ['es2015']})
 
   return browserify('./tmp/app.js', {debug: true})
@@ -40,8 +42,18 @@ gulp.task('concat', () => {
     .pipe(gulp.dest('tmp'))
 })
 
-gulp.task('test', ['concat'], () => {
-  return gulp.src(['./tmp/app.js', 'spec/**/*.js'])
+gulp.task('test', ['compile-test-sources'], () => {
+  return gulp.src(['tmp/test.js'])
     .pipe(jasmine())
+})
+
+gulp.task('compile-test-sources', () => {
+  const compileES2015 = babel({presets: ['es2015']})
+
+  return gulp.src(['src/prelude.js', 'src/lib/**/*.js', 'spec/**/*.js'])
+    .pipe(iife())
+    .pipe(compileES2015) // TODO: the latest version of V8 implements more of the ES2015 spec. See if this can be removed after upgrading Node to the latest version.
+    .pipe(concat('test.js'))
+    .pipe(gulp.dest('tmp'))
 })
 
