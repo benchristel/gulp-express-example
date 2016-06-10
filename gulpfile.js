@@ -11,103 +11,65 @@ const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const sourceMaps = require('gulp-sourcemaps')
 const esLint = require('gulp-eslint')
-
-const js = {
-  // JS files in src become part of the compiled app.
-  src: 'src/**/*.js',
-
-  // Always runs before libs (below) are loaded.
-  // By default it inits the dependency injector.
-  prelude: 'src/prelude.js',
-
-  // Injectable modules - i.e. stuff you should unit-test
-  lib: 'src/lib/**/*.js',
-
-  // Boots the app; runs after the files in lib/ are loaded.
-  // Not loaded when running tests.
-  main: 'src/main.js',
-
-  // The tests
-  spec: 'spec/**/*.js',
-
-  // This file!
-  gulpfile: 'gulpfile.js'
-}
-
-const dirs = {
-  // The build process puts intermediate files here:
-  tmp: 'tmp/',
-
-  // The final, shiny output goes here:
-  dist: 'dist/'
-}
-
-const outputFiles = {
-  // This compiled file is the ultimate product of the build.
-  // It goes in dirs.dist.
-  app: 'app.js',
-
-  // This test file will be generated in tmp/ and run by Jasmine.
-  specs: 'specs.js'
-}
-
-const tmpApp = dirs.tmp + outputFiles.app
-const tmpSpecs = dirs.tmp + outputFiles.specs
+const sequence = require('run-sequence')
 
 gulp.task('watch', () => {
-  gulp.start('build')
-  gulp.watch([js.src, js.gulpfile], ['build'])
-  gulp.watch([js.spec], ['check'])
+  sequence('build', 'print-divider')
+
+  gulp.watch(['src/**/*.js', 'gulpfile.js'], () =>
+    sequence('build', 'print-divider')
+  )
+
+  gulp.watch(['spec/**/*.js'], () =>
+    sequence('check', 'print-divider')
+  )
 })
 
-gulp.task('build', ['check', 'dist'])
+gulp.task('print-divider', () => {
+  const time = new Date().toTimeString().slice(0, 8)
+  const message = `==[finished at ${time}]`
+
+  console.log(message + Array(80 - message.length).fill('=').join(''))
+})
+
+gulp.task('build', ['check', 'dist-browser'])
 
 gulp.task('check', ['test', 'lint'])
 
-gulp.task('test', ['compile-test-sources'], () => {
-  return gulp.src([tmpSpecs])
-    .pipe(jasmine())
-})
-
 gulp.task('lint', () => {
-  return gulp.src([js.src, js.spec, js.gulpfile])
+  return gulp.src(['@(src|spec)/**/*.js', '*.js'])
     .pipe(esLint())
     .pipe(esLint.format())
 })
 
-//
-// Tasks below are not intended to be run from the command line.
-//
-
-gulp.task('compile-test-sources', () => {
-  const compileES2015 = babel({presets: ['es2015']})
-
-  return gulp.src([js.prelude, js.lib, js.spec])
-    .pipe(iife())
-    .pipe(compileES2015) // TODO: the latest version of V8 implements more of the ES2015 spec. See if this can be removed after upgrading Node to the latest version.
-    .pipe(concat(outputFiles.specs))
-    .pipe(gulp.dest(dirs.tmp))
-})
-
-gulp.task('dist', ['concat'], () => {
-  const compileES2015 = babel({presets: ['es2015']})
-
-  return browserify(tmpApp, {debug: true})
+gulp.task('dist-browser', ['concat-browser'], () => {
+  return browserify('tmp/browser.js', {debug: true})
     .bundle()
-    .pipe(source(outputFiles.app))
+    .pipe(source('browser.js'))
     .pipe(buffer())
     .pipe(sourceMaps.init({loadMaps: true}))
-      .pipe(compileES2015)
+      .pipe(compileES2015())
       .pipe(uglify({mangle: false})) // As of June 2016, browser debuggers do not support mapping mangled names back to the original variable name. See https://bugs.chromium.org/p/chromium/issues/detail?id=327092
     .pipe(sourceMaps.write('./'))
-    .pipe(gulp.dest(dirs.dist))
+    .pipe(gulp.dest('dist/'))
 })
 
-gulp.task('concat', () => {
-  return gulp.src([js.prelude, js.lib, js.main], {base: 'src'})
+gulp.task('concat-browser', () => {
+  return gulp.src(['src/shared/prelude.js', 'src/@(browser|shared)/lib/**/*.js', 'src/browser/main.js'], {base: 'src'})
     .pipe(sourceMaps.init())
       .pipe(iife())
-      .pipe(concat(outputFiles.app))
+      .pipe(concat('browser.js'))
     .pipe(sourceMaps.write())
-    .pipe(gulp.dest(dirs.tmp))
+    .pipe(gulp.dest('tmp/'))
 })
+
+gulp.task('test', () => {
+  return gulp.src(['src/shared/prelude.js', 'src/*/lib/**/*.js', 'spec/**/*.js'])
+    .pipe(iife())
+    .pipe(compileES2015())
+    .pipe(jasmine())
+})
+
+function compileES2015 () {
+  return babel({presets: ['es2015']})
+}
