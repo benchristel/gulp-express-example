@@ -1,5 +1,8 @@
-const User = Yavanna.get('User')
+const $ = require('jquery')
 
 window.addEventListener('load', function () {
-  console.log('users name is', User().name)
+  $.get('/user')
+    .then(user => {
+      document.body.innerHTML = `Hello, ${user.name}`
+    })
 })
