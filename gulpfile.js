@@ -40,7 +40,13 @@ gulp.task('build', ['check', 'dist-browser', 'dist-server'])
 gulp.task('check', ['test', 'lint'])
 
 gulp.task('test', () => {
-  return gulp.src(['src/shared/prelude.js', 'src/*/lib/**/*.js', 'spec/**/*.js'])
+  const source = [
+    'src/shared/prelude.js',
+    'src/*/lib/**/*.js',
+    'spec/**/*.js'
+  ]
+
+  return gulp.src(source)
     .pipe(iife())
     .pipe(compileES2015())
     .pipe(jasmine())
@@ -61,7 +67,13 @@ gulp.task('dist-browser', ['concat-browser'], () => {
 })
 
 gulp.task('concat-browser', () => {
-  return gulp.src(['src/shared/prelude.js', 'src/@(browser|shared)/lib/**/*.js', 'src/browser/main.js'], {base: 'src'})
+  const source = [
+    'src/shared/prelude.js',
+    'src/@(browser|shared)/lib/**/*.js',
+    'src/browser/main.js'
+  ]
+
+  return gulp.src(source, {base: 'src'})
     .pipe(sourceMaps.init())
       .pipe(compileES2015())
       .pipe(iife())
