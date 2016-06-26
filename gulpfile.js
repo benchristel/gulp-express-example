@@ -13,14 +13,16 @@ var esLint = require('gulp-eslint')
 var plumber = require('gulp-plumber')
 
 gulp.task('watch', function () {
-  return gulp.series(build, printDivider)(function () {
+  return gulp.series(check, build, printDivider)(function () {
     // beware!
     // Due to a bug (?) in one of gulp's dependencies,
     // `gulp.watch` will not notice created or deleted files
     // in paths beginning with './'
-    gulp.watch(['src/**/*.js', 'gulpfile.js'], gulp.series(build, printDivider))
+    gulp.watch(['src/**/*.js', 'gulpfile.js'],
+      gulp.series(check, build, printDivider))
 
-    return gulp.watch(['spec/**/*.js'], gulp.series(check, printDivider))
+    gulp.watch(['spec/**/*.js'],
+      gulp.series(check, printDivider))
   })
 })
 
