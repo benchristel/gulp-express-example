@@ -1,3 +1,3 @@
 Yavanna.provide('User', () => {
-  return () => { return {name: 'eric'} }
+  return () => { return {name: 'bob'} }
 })
