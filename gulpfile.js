@@ -49,7 +49,10 @@ function test (done) {
     .pipe(compileES2015())
     .pipe(jasmine())
     .on('jasmineDone', done)
-    .on('error', () => done())
+    .on('error', (err) => {
+      console.error(err.message)
+      done()
+    })
 }
 
 function lint (done) {
