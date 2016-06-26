@@ -57,6 +57,7 @@ gulp watch --silent # suppress gulp output cruft
 
 ## Gotchas
 
+- `gulp check` won't do what you want on CI - the exit code is always zero regardless of what the tests/linter output.
 - Because of the way tests are currently run, you can't have different server and browser modules with the same name. For example, if you have a `User` class on the server that's a database model, you can't have a separate `User` class for the browser—the dependency injector will complain that you're registering two modules with the same name.
 
   Depending on the structure of your team, this constraint on naming may or may not be desirable. It should be possible to run the browser and server tests in separate Jasmine instances so the names don't collide, but I haven't gotten to it yet.
