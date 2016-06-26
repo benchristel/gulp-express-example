@@ -52,5 +52,12 @@ gulp watch --silent # suppress gulp output cruft
 
 ## Possibly missing features
 
-- Support for building CLI apps
 - An option to build a production version of the app with minified browser code (I originally had `uglify` in the normal build pipeline, but it was too slow to use for development)
+- A version of the build pipeline that works for published NPM packages, or CLI apps.
+
+## Gotchas
+
+- Because of the way tests are currently run, you can't have different server and browser modules with the same name. For example, if you have a `User` class on the server that's a database model, you can't have a separate `User` class for the browser—the dependency injector will complain that you're registering two modules with the same name.
+
+  Depending on the structure of your team, this constraint on naming may or may not be desirable. It should be possible to run the browser and server tests in separate Jasmine instances so the names don't collide, but I haven't gotten to it yet.
+- You will need to upgrade your Gulp CLI to work with Gulp 4, which probably means that you won't be able to build Gulp 3 projects anymore without downgrading Gulp. If you switch between projects frequently, this could be a source of pain.
