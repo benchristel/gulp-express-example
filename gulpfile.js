@@ -10,70 +10,58 @@ var source = require('vinyl-source-stream')
 var buffer = require('vinyl-buffer')
 var sourceMaps = require('gulp-sourcemaps')
 var esLint = require('gulp-eslint')
-var plumber = require('gulp-plumber')
+var watch = require('gulp-sane-watch')
 
 gulp.task('watch', function () {
-  return gulp.series(check, build, printDivider)(function () {
-    // beware!
-    // Due to a bug (?) in one of gulp's dependencies,
-    // `gulp.watch` will not notice created or deleted files
-    // in paths beginning with './'
-    gulp.watch(['src/**/*.js', 'gulpfile.js'],
-      gulp.series(check, build, printDivider))
+  watch(['src/**/*.js', 'gulpfile.js'], function () {
+    gulp.series(test, lint, build)(printDivider)
+  })
 
-    gulp.watch(['spec/**/*.js'],
-      gulp.series(check, printDivider))
+  watch(['spec/**/*.js'], function () {
+    gulp.series(test, lint)(printDivider)
   })
 })
 
-function printDivider (done) {
+function printDivider () {
   var time = new Date().toTimeString().slice(0, 8)
   var message = '==[finished at ' + time + ']'
 
   console.log(message + Array(80 - message.length).fill('=').join(''))
-  done()
 }
 
 var check = gulp.series(test, lint)
 
-function test (done) {
+function test () {
   var source = [
     'src/shared/prelude.js',
     'src/*/lib/**/*.js',
     'spec/**/*.js'
   ]
 
-  gulp.src(source)
-    .pipe(plumber())
+  return gulp.src(source)
     .pipe(iife())
     .pipe(compileES2015())
     .pipe(jasmine())
-    .on('jasmineDone', done)
-    .on('error', function (err) {
-      console.error(err.message)
-      done()
-    })
 }
 
-function lint (done) {
+function lint () {
   return gulp.src(['@(src|spec)/**/*.js', '*.js'])
-    .pipe(plumber())
     .pipe(esLint())
     .pipe(esLint.format('stylish', process.stdout))
+    .pipe(esLint.failAfterError())
 }
 
 var build = gulp.series(concatBrowser, distBrowser, distServer)
 
-function distBrowser (done) {
-  browserify('tmp/browser.js', { debug: true })
+function distBrowser () {
+  return browserify('tmp/browser.js', { debug: true })
     .bundle()
     .pipe(source('browser.js'))
     .pipe(buffer())
     .pipe(gulp.dest('dist/public/js'))
-    .on('end', done)
 }
 
-function concatBrowser (done) {
+function concatBrowser () {
   var source = [
     'src/shared/prelude.js',
     'src/@(browser|shared)/lib/**/*.js',
@@ -81,17 +69,15 @@ function concatBrowser (done) {
   ]
 
   return gulp.src(source, { base: 'src' })
-    .pipe(plumber())
     .pipe(sourceMaps.init())
       .pipe(compileES2015())
       .pipe(iife())
       .pipe(concat('browser.js'))
     .pipe(sourceMaps.write())
     .pipe(gulp.dest('tmp/'))
-    .on('end', done)
 }
 
-function distServer (done) {
+function distServer () {
   var source = [
     'src/shared/prelude.js',
     'src/@(server/shared)/lib/**/*.js',
@@ -99,12 +85,10 @@ function distServer (done) {
   ]
 
   return gulp.src(source, { base: 'src' })
-    .pipe(plumber())
     .pipe(iife())
     .pipe(concat('server.js'))
     .pipe(compileES2015())
     .pipe(gulp.dest('dist'))
-    .on('end', done)
 }
 
 gulp.task('build', gulp.series(check, build))
