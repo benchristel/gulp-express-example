@@ -34,7 +34,7 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
-    "test": "gulp test"
+    "test": "gulp check"
   },
   "author": "Ben Christel",
   "license": "MIT"
