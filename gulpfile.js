@@ -11,14 +11,29 @@ var buffer = require('vinyl-buffer')
 var sourceMaps = require('gulp-sourcemaps')
 var esLint = require('gulp-eslint')
 var watch = require('gulp-sane-watch')
+var file = require('gulp-file')
+
+gulp.task('default',
+  gulp.parallel(
+    gulp.series(compile, test, linkBrowser),
+    lint
+  )
+)
+
+gulp.task('check',
+  gulp.parallel(
+    gulp.series(compile, test),
+    lint
+  )
+)
 
 gulp.task('watch', function () {
   watch(['src/**/*.js', 'gulpfile.js'], function () {
-    gulp.series(test, lint, build)(printDivider)
+    gulp.series(lint, compile, test)(printDivider)
   })
 
-  watch(['spec/**/*.js'], function () {
-    gulp.series(test, lint)(printDivider)
+  watch(['.build_tmp/object/**/*.js'], function () {
+    gulp.parallel(linkBrowser, linkServer)
   })
 })
 
@@ -29,80 +44,85 @@ function printDivider () {
   console.log(message + Array(80 - message.length).fill('=').join(''))
 }
 
-var check = gulp.series(test, lint)
-
-function test () {
-  var source = [
-    'src/shared/prelude.js',
-    'src/*/lib/**/*.js',
-    'spec/**/*.js'
+function test (done) {
+  var ofiles = [
+    '.build_tmp/object/prelude.js',
+    '.build_tmp/object/app/**/!(main).js',
+    '.build_tmp/object/spec/**/*.js'
   ]
 
-  return gulp.src(source)
-    .pipe(iife())
-    .pipe(compileES2015())
-    .pipe(jasmine())
+  return gulp.src(ofiles).pipe(jasmine())
+}
+
+function compile () {
+  return gulp.src(['src/**/*.js'])
+    .pipe(sourceMaps.init())
+      .pipe(compileES2015())
+      .pipe(iife())
+    .pipe(sourceMaps.write())
+    .pipe(prelude())
+    .pipe(gulp.dest('.build_tmp/object'))
+}
+
+function link () {
+  return gulp.parallel(linkBrowser)
+}
+
+function linkBrowser () {
+  function concatObjects () {
+    var ofiles = [
+      '.build_tmp/object/prelude.js',
+      '.build_tmp/object/app/browser/**/!(main).js',
+      '.build_tmp/object/app/browser/main.js'
+    ]
+
+    return gulp.src(ofiles)
+      .pipe(sourceMaps.init())
+        .pipe(concat('browser.js'))
+      .pipe(sourceMaps.write())
+      .pipe(gulp.dest('.build_tmp'))
+  }
+
+  function doBrowserify () {
+    return browserify('.build_tmp/browser.js', { debug: true })
+      .bundle()
+      .pipe(source('browser.js'))
+      .pipe(buffer())
+      .pipe(gulp.dest('dist/public/js'))
+  }
+
+  return gulp.series(concatObjects, doBrowserify)
+}
+
+function linkServer () {
+  var ofiles = [
+    'object/app/@(shared|server)/**/!(main).js',
+    'object/app/server/main.js'
+  ]
+
+  return gulp.src(ofiles)
+    .pipe(sourceMaps.init())
+      .pipe(concat('server.js'))
+    .pipe(sourceMaps.write())
+    .pipe(gulp.dest('dist/'))
 }
 
 function lint () {
-  return gulp.src(['@(src|spec)/**/*.js', '*.js'])
+  return gulp.src(['src/**/*.js', '*.js'])
     .pipe(esLint())
     .pipe(esLint.format('stylish', process.stdout))
     .pipe(esLint.failAfterError())
 }
 
-var build = gulp.series(concatBrowser, distBrowser, distServer)
-
-function distBrowser () {
-  return browserify('tmp/browser.js', { debug: true })
-    .bundle()
-    .pipe(source('browser.js'))
-    .pipe(buffer())
-    .pipe(gulp.dest('dist/public/js'))
-}
-
-function concatBrowser () {
-  var source = [
-    'src/shared/prelude.js',
-    'src/@(browser|shared)/lib/**/*.js',
-    'src/browser/main.js'
-  ]
-
-  return gulp.src(source, { base: 'src' })
-    .pipe(sourceMaps.init())
-      .pipe(compileES2015())
-      .pipe(iife())
-      .pipe(concat('browser.js'))
-    .pipe(sourceMaps.write())
-    .pipe(gulp.dest('tmp/'))
-}
-
-function distServer () {
-  var source = [
-    'src/shared/prelude.js',
-    'src/@(server/shared)/lib/**/*.js',
-    'src/server/main.js'
-  ]
-
-  return gulp.src(source, { base: 'src' })
-    .pipe(iife())
-    .pipe(concat('server.js'))
-    .pipe(compileES2015())
-    .pipe(gulp.dest('dist'))
-}
-
-gulp.task('build', gulp.series(check, build))
-
-gulp.task('check', check)
-
-gulp.task('test', test)
-
-gulp.task('lint', lint)
-
-gulp.task('concat-browser', concatBrowser)
-
-gulp.task('dist-server', distServer)
-
 function compileES2015 () {
   return babel({ presets: ['es2015'] })
+}
+
+function prelude () {
+  var contents =
+    "var Yavanna = require('@benchristel/yavanna')()\n" +
+    "if (typeof window === 'object') window.Yavanna = Yavanna\n" +
+    "if (typeof global === 'object') global.Yavanna = Yavanna\n"
+
+  return file('prelude.js', contents)
 }
