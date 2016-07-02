@@ -1,5 +1,7 @@
 # Gulp 4 + Express Example
 
+![circleci badge](https://circleci.com/gh/benchristel/gulp-express-example?circle-token=ef4a53333c04c001ce37c0877ad1a1628e338d9d)
+
 This repo demonstrates my current opinions on how to build an Express webapp using Gulp 4. Currently it is rather complex and possibly slow; expect it to get faster and then simpler.
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
