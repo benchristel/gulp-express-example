@@ -61,10 +61,6 @@ function compile () {
     .pipe(gulp.dest('.build_tmp/object'))
 }
 
-function link () {
-  return gulp.parallel(linkBrowser)
-}
-
 function linkBrowser () {
   function concatObjects () {
     var ofiles = [
