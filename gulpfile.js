@@ -21,10 +21,7 @@ gulp.task('default',
 )
 
 gulp.task('check',
-  gulp.parallel(
-    gulp.series(compile, test),
-    lint
-  )
+  gulp.series(compile, test, lint)
 )
 
 gulp.task('watch', function () {
@@ -44,7 +41,7 @@ function printDivider () {
   console.log(message + Array(80 - message.length).fill('=').join(''))
 }
 
-function test (done) {
+function test () {
   var ofiles = [
     '.build_tmp/object/prelude.js',
     '.build_tmp/object/app/**/!(main).js',
@@ -56,11 +53,11 @@ function test (done) {
 
 function compile () {
   return gulp.src(['src/**/*.js'])
+    .pipe(prelude())
     .pipe(sourceMaps.init())
       .pipe(compileES2015())
       .pipe(iife())
     .pipe(sourceMaps.write())
-    .pipe(prelude())
     .pipe(gulp.dest('.build_tmp/object'))
 }
 
