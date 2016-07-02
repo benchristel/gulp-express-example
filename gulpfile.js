@@ -14,10 +14,7 @@ var watch = require('gulp-sane-watch')
 var file = require('gulp-file')
 
 gulp.task('default',
-  gulp.parallel(
-    gulp.series(compile, test, linkBrowser),
-    lint
-  )
+  gulp.series(compile, test, concatObjects, doBrowserify, lint)
 )
 
 gulp.task('check',
@@ -61,30 +58,26 @@ function compile () {
     .pipe(gulp.dest('.build_tmp/object'))
 }
 
-function linkBrowser () {
-  function concatObjects () {
-    var ofiles = [
-      '.build_tmp/object/prelude.js',
-      '.build_tmp/object/app/browser/**/!(main).js',
-      '.build_tmp/object/app/browser/main.js'
-    ]
+function concatObjects () {
+  var ofiles = [
+    '.build_tmp/object/prelude.js',
+    '.build_tmp/object/app/browser/**/!(main).js',
+    '.build_tmp/object/app/browser/main.js'
+  ]
 
-    return gulp.src(ofiles)
-      .pipe(sourceMaps.init())
-        .pipe(concat('browser.js'))
-      .pipe(sourceMaps.write())
-      .pipe(gulp.dest('.build_tmp'))
-  }
+  return gulp.src(ofiles)
+    .pipe(sourceMaps.init({loadMaps: true}))
+      .pipe(concat('browser.js'))
+    .pipe(sourceMaps.write('.'))
+    .pipe(gulp.dest('.build_tmp'))
+}
 
-  function doBrowserify () {
-    return browserify('.build_tmp/browser.js', { debug: true })
-      .bundle()
-      .pipe(source('browser.js'))
-      .pipe(buffer())
-      .pipe(gulp.dest('dist/public/js'))
-  }
-
-  return gulp.series(concatObjects, doBrowserify)
+function doBrowserify () {
+  return browserify('.build_tmp/browser.js', { debug: true })
+    .bundle()
+    .pipe(source('browser.js'))
+    .pipe(buffer())
+    .pipe(gulp.dest('dist/public/js'))
 }
 
 function linkServer () {
