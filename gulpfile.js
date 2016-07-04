@@ -32,26 +32,26 @@ browserifier.on('log', function (message) {
 })
 
 gulp.task('default',
-  gulp.series(compile, test, doBrowserify, lint)
+  gulp.series(compile(), test, lint)
 )
 
 gulp.task('check',
-  gulp.series(compile, test, lint)
+  gulp.series(compile(), test, lint)
 )
 
 gulp.task('watch', function () {
   writeBrowserifyBundle()
 
-  watch(['src/**/*.js', 'gulpfile.js'], function () {
-    gulp.series(lint, compile, test)(printDivider)
+  watch(['src/**/*.js', 'gulpfile.js'], function (filename, path) {
+    var fullName = path + '/' + filename
+    lint()
+    gulp.series(compile(fullName), test)(printDivider)
   })
 
-  watch(['.build_tmp/object/**/*.js'], function () {
-    gulp.series(writeBrowserifyBundle, linkServer)()
+  watch(['.build_tmp/object/app/**/*.js'], function () {
+    gulp.series(writeManifest, writeBrowserifyBundle, linkServer)()
   })
 })
-
-gulp.task(writeManifest)
 
 function writeBrowserifyBundle () {
   return browserifier.bundle()
@@ -80,32 +80,18 @@ function test () {
   return gulp.src(ofiles).pipe(jasmine())
 }
 
-function compile () {
-  return gulp.src(['src/**/*.js'])
-    .pipe(prelude())
-    .pipe(sourceMaps.init())
-      .pipe(compileES2015())
-      .pipe(iife())
-    .pipe(sourceMaps.write())
-    .pipe(gulp.dest('.build_tmp/object'))
-}
+function compile (sources) {
+  sources = sources || ['src/**/*.js']
 
-function doBrowserify () {
-  var ofiles = [
-    '.build_tmp/object/prelude.js',
-    '.build_tmp/object/app/browser/**/!(main).js',
-    '.build_tmp/object/app/shared/**/*.js',
-    '.build_tmp/object/app/browser/main.js'
-  ]
-
-  return browserify(expandGlobs(ofiles), { debug: true })
-    .bundle()
-    .pipe(source('browser.js'))
-    .pipe(buffer())
-    .pipe(sourceMaps.init({loadMaps: true}))
-      .pipe(iife())
-    .pipe(sourceMaps.write('.'))
-    .pipe(gulp.dest('dist/public/js'))
+  return function () {
+    return gulp.src(sources)
+      .pipe(prelude())
+      .pipe(sourceMaps.init())
+        .pipe(compileES2015())
+        .pipe(iife())
+      .pipe(sourceMaps.write())
+      .pipe(gulp.dest('.build_tmp/object'))
+  }
 }
 
 function linkServer () {
