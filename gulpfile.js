@@ -1,18 +1,18 @@
 'use strict'
 
-var gulp = require('gulp')
-var iife = require('gulp-iife')
-var concat = require('gulp-concat')
-var jasmine = require('gulp-jasmine')
-var browserify = require('browserify')
 var babel = require('gulp-babel')
-var source = require('vinyl-source-stream')
+var browserify = require('browserify')
 var buffer = require('vinyl-buffer')
-var sourceMaps = require('gulp-sourcemaps')
+var concat = require('gulp-concat')
 var esLint = require('gulp-eslint')
-var watch = require('gulp-sane-watch')
 var file = require('gulp-file')
 var glob = require('glob')
+var gulp = require('gulp')
+var iife = require('gulp-iife')
+var jasmine = require('gulp-jasmine')
+var source = require('vinyl-source-stream')
+var sourceMaps = require('gulp-sourcemaps')
+var watch = require('gulp-sane-watch')
 var watchify = require('watchify')
 
 /* see: https://github.com/gulpjs/gulp/blob/master/docs/recipes/fast-browserify-builds-with-watchify.md */
