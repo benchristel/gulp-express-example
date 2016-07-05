@@ -26,8 +26,6 @@ gulp.task('default', gulp.series(compile(), test, lint))
 gulp.task('check', gulp.series(compile(), test, lint))
 
 gulp.task('watch', function () {
-  browserifier.writeBundle()
-
   var writeManifest = manifest({
     baseDir: '.build_tmp/',
     outputFilename: 'manifest.js',
@@ -39,14 +37,15 @@ gulp.task('watch', function () {
     ]
   })
 
-  watch(['src/**/*.js', 'gulpfile.js'], function (filepath) {
-    var whatChanged = 'src/' + filepath
-    gulp.series(compile(whatChanged), test, lint)(printDivider)
-  })
+  gulp.series(compile(), test, lint, writeManifest, browserifier.writeBundle, linkServer)(function () {
+    watch(['src/**/*.js'], function (filepath) {
+      var whatChanged = 'src/' + filepath
+      gulp.series(compile(whatChanged), test, lint)(printDivider)
+    })
 
-  watch(['.build_tmp/object/app/**/*.js'], function () {
-    console.log('a thing happened')
-    gulp.series(writeManifest, browserifier.writeBundle, linkServer)()
+    watch(['.build_tmp/object/app/**/*.js'], function () {
+      gulp.series(writeManifest, browserifier.writeBundle, linkServer)()
+    })
   })
 })
 
