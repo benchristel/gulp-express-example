@@ -71,7 +71,7 @@ function compile (sources) {
   sources = sources || ['src/**/*.js']
 
   return function () {
-    return gulp.src(sources)
+    return gulp.src(sources, { base: 'src' })
       .pipe(prelude())
       .pipe(sourceMaps.init())
         .pipe(compileES2015())
