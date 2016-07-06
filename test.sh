@@ -20,7 +20,7 @@ rm src/spec/fail.js
 
 echo '=== starting gulp watch...'
 gulp watch & (
-  sleep 2 &&
+  sleep 4 &&
   echo '=== this test should fail...' &&
   echo 'describe("", () => { it("", () => { throw "fail" })})' > src/spec/fail.js &&
   sleep 4 &&

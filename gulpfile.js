@@ -4,12 +4,14 @@ var babel = require('gulp-babel')
 var browserify = require('browserify')
 var buffer = require('vinyl-buffer')
 var concat = require('gulp-concat')
+var del = require('del')
 var esLint = require('gulp-eslint')
 var file = require('gulp-file')
 var glob = require('glob')
 var gulp = require('gulp')
 var iife = require('gulp-iife')
 var jasmine = require('gulp-jasmine')
+var pathUtils = require('path')
 var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
@@ -21,26 +23,56 @@ var browserifier = FastBrowserifier({
   outputFilename: 'browser.js'
 })
 
-gulp.task('default', gulp.series(compile(), test, lint))
+function allTasks () {
+  return gulp.series(
+    clean,
+    compile(),
+    test,
+    lint,
+    writeManifest,
+    browserifier.writeBundleWithoutWatching,
+    linkServer
+  )
+}
+
+var writeManifest = manifest({
+  outputFilename: '.build_tmp/manifest.js',
+  files: [
+    '.build_tmp/object/prelude.js',
+    '.build_tmp/object/app/browser/**/!(main).js',
+    '.build_tmp/object/app/shared/**/*.js',
+    '.build_tmp/object/app/browser/main.js'
+  ]
+})
+
+gulp.task('default', allTasks())
 
 gulp.task('check', gulp.series(compile(), test, lint))
 
-gulp.task('watch', function () {
-  var writeManifest = manifest({
-    baseDir: '.build_tmp/',
-    outputFilename: 'manifest.js',
-    files: [
-      'object/prelude.js',
-      'object/app/browser/**/!(main).js',
-      'object/app/shared/**/*.js',
-      'object/app/browser/main.js'
-    ]
-  })
+gulp.task('clean', clean)
 
-  gulp.series(compile(), test, lint, writeManifest, browserifier.writeBundle, linkServer)(function () {
-    watch(['src/**/*.js'], function (filepath) {
+gulp.task('watch', function () {
+  gulp.series(
+    clean,
+    compile(),
+    test,
+    lint,
+    writeManifest,
+    browserifier.writeBundle,
+    linkServer
+  )(function () {
+    var handleFileChange = function (filepath) {
       var whatChanged = 'src/' + filepath
       gulp.series(compile(whatChanged), test, lint)(printDivider)
+    }
+
+    watch(['src/**/*.js'], {
+      onChange: handleFileChange,
+      onAdd: handleFileChange,
+      onDelete: function (filepath) {
+        gulp.series(deleteObjectFile(filepath), test, lint)(printDivider)
+      },
+      debounce: 50
     })
 
     watch(['.build_tmp/object/app/**/*.js'], function () {
@@ -66,6 +98,10 @@ function test () {
   return gulp.src(ofiles).pipe(jasmine())
 }
 
+function clean () {
+  return del('.build_tmp/*')
+}
+
 function compile (sources) {
   sources = sources || ['src/**/*.js']
 
@@ -77,6 +113,12 @@ function compile (sources) {
         .pipe(iife())
       .pipe(sourceMaps.write())
       .pipe(gulp.dest('.build_tmp/object'))
+  }
+}
+
+function deleteObjectFile (pathRelativeToSrc) {
+  return function () {
+    return del('.build_tmp/object/' + pathRelativeToSrc)
   }
 }
 
@@ -122,17 +164,22 @@ function FastBrowserifier (options) {
   var filename = options.outputFilename
 
   var self = {
-    writeBundle: writeBundle
+    writeBundle: writeBundle,
+    writeBundleWithoutWatching: writeBundleWithoutWatching
   }
 
-  var watch = watchify(browserify({
-    /* entry point for Browserify; files `require`d in the manifest
-     * will be included in the bundle */
-    entries: src,
-    /* the debug: true option makes browserify generate sourcemaps */
-    debug: true,
-    cache: {}, packageCache: {} // TODO: are these needed?
-  }))
+  var browserifier = function () {
+    return browserify({
+      /* entry point for Browserify; files `require`d in the manifest
+       * will be included in the bundle */
+      entries: src,
+      /* the debug: true option makes browserify generate sourcemaps */
+      debug: true,
+      cache: {}, packageCache: {} // TODO: are these needed?
+    })
+  }
+
+  var watch = watchify(browserifier())
 
   watch.on('log', function (message) {
     console.log(message)
@@ -148,23 +195,30 @@ function FastBrowserifier (options) {
       .pipe(gulp.dest(dest))
   }
 
+  function writeBundleWithoutWatching () {
+    return browserifier().bundle()
+      .on('error', function (message) {
+        console.log(message)
+      })
+      .pipe(source(filename))
+      .pipe(buffer())
+      .pipe(gulp.dest(dest))
+  }
+
   return self
 }
 
 function manifest (options) {
-  var baseDir = options.baseDir
-  var files = options.files.map(function (f) {
-    return baseDir + f
-  })
+  var files = options.files
   var outputFilename = options.outputFilename
 
   return function () {
     var contents = expandGlobs(files)
-      .map(upOneDirectory)
+      .map(pathRelativeToManifest)
       .map(wrapInRequireCall).join('\n')
 
-    return file(outputFilename, contents, { src: true })
-      .pipe(gulp.dest(baseDir))
+    return file(pathUtils.basename(outputFilename), contents, { src: true })
+      .pipe(gulp.dest(pathUtils.dirname(outputFilename)))
   }
 
   function expandGlobs (globs) {
@@ -174,10 +228,10 @@ function manifest (options) {
   }
 
   function wrapInRequireCall (path) {
-    return "require('" + path + "')"
+    return "require('./" + path + "')"
   }
 
-  function upOneDirectory (path) {
-    return '../' + path
+  function pathRelativeToManifest (path) {
+    return pathUtils.relative(pathUtils.dirname(outputFilename), path)
   }
 }
