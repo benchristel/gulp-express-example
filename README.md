@@ -2,7 +2,7 @@
 
 [![circleci badge](https://circleci.com/gh/benchristel/gulp-express-example.svg?style=shield&circle-token=ef4a53333c04c001ce37c0877ad1a1628e338d9d)](https://circleci.com/gh/benchristel/gulp-express-example)
 
-This repo demonstrates my current opinions on how to build an Express webapp using Gulp 4. Currently it is rather complex and possibly slow; expect it to get faster and then simpler.
+This repo demonstrates my current opinions on how to build an Express webapp using Gulp 4. Currently it is rather complex; expect it to get simpler as I extract reusable packages.
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
 
@@ -59,8 +59,6 @@ gulp watch --silent # suppress gulp output cruft
 
 ## Gotchas
 
-- `gulp check` won't do what you want on CI - the exit code is always zero regardless of what the tests/linter output.
 - Because of the way tests are currently run, you can't have different server and browser modules with the same name. For example, if you have a `User` class on the server that's a database model, you can't have a separate `User` class for the browser—the dependency injector will complain that you're registering two modules with the same name.
 
   Depending on the structure of your team, this constraint on naming may or may not be desirable. It should be possible to run the browser and server tests in separate Jasmine instances so the names don't collide, but I haven't gotten to it yet.
-- You will need to upgrade your Gulp CLI to work with Gulp 4, which probably means that you won't be able to build Gulp 3 projects anymore without downgrading Gulp. If you switch between projects frequently, this could be a source of pain.
