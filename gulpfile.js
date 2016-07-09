@@ -37,7 +37,7 @@ function allTasks () {
     clean,
     compile(),
     test,
-    lint,
+    //lint,
     writeManifest,
     writeBundle,
     linkServer
@@ -46,7 +46,7 @@ function allTasks () {
 
 gulp.task('default', allTasks())
 
-gulp.task('check', gulp.series(compile(), test, lint))
+gulp.task('check', gulp.series(compile(), test))
 
 gulp.task('clean', clean)
 
@@ -56,7 +56,7 @@ gulp.task('watch', function () {
       onChange: handleFileChange,
       onAdd: handleFileChange,
       onDelete: function (filepath) {
-        gulp.series(deleteObjectFile(filepath), test, lint)(printDivider)
+        gulp.series(deleteObjectFile(filepath), test)(printDivider)
       },
       debounce: 50
     })
@@ -69,7 +69,7 @@ gulp.task('watch', function () {
 
 function handleFileChange (filepath) {
   var whatChanged = 'src/' + filepath
-  gulp.series(compile(whatChanged), test, lint)(printDivider)
+  gulp.series(compile(whatChanged), test)(printDivider)
 }
 
 function printDivider () {
@@ -156,7 +156,7 @@ function cachedBrowserify (options) {
 
   var browserifier = cache(browserify({
     entries: src,
-    debug: true
+    debug: true // creates sourcemaps
   }))
 
   return function browserifyBundle () {
