@@ -170,12 +170,11 @@ function FastBrowserifier (options) {
 
   var browserifier = function () {
     return browserify({
-      /* entry point for Browserify; files `require`d in the manifest
-       * will be included in the bundle */
       entries: src,
       /* the debug: true option makes browserify generate sourcemaps */
       debug: true,
-      cache: {}, packageCache: {} // TODO: are these needed?
+      cache: {},
+      packageCache: {}
     })
   }
 
