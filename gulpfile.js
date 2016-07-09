@@ -8,11 +8,10 @@ var concat = require('gulp-concat')
 var del = require('del')
 var esLint = require('gulp-eslint')
 var file = require('gulp-file')
-var glob = require('glob')
 var gulp = require('gulp')
 var iife = require('gulp-iife')
 var jasmine = require('gulp-jasmine')
-var pathUtils = require('path')
+var manifest = require('gulp-task-js-manifest')
 var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
@@ -171,30 +170,3 @@ function cachedBrowserify (options) {
   }
 }
 
-function manifest (options) {
-  var files = options.files
-  var outputFilename = options.outputFilename
-
-  return function () {
-    var contents = expandGlobs(files)
-      .map(pathRelativeToManifest)
-      .map(wrapInRequireCall).join('\n')
-
-    return file(pathUtils.basename(outputFilename), contents, { src: true })
-      .pipe(gulp.dest(pathUtils.dirname(outputFilename)))
-  }
-
-  function expandGlobs (globs) {
-    return globs
-      .map(function (g) { return glob.sync(g) })
-      .reduce(function (a, b) { return a.concat(b) })
-  }
-
-  function wrapInRequireCall (path) {
-    return "require('./" + path + "')"
-  }
-
-  function pathRelativeToManifest (path) {
-    return pathUtils.relative(pathUtils.dirname(outputFilename), path)
-  }
-}
