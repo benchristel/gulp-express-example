@@ -52,11 +52,6 @@ gulp.task('clean', clean)
 
 gulp.task('watch', function () {
   allTasks()(function () {
-    var handleFileChange = function (filepath) {
-      var whatChanged = 'src/' + filepath
-      gulp.series(compile(whatChanged), test, lint)(printDivider)
-    }
-
     watch(['src/**/*.js'], {
       onChange: handleFileChange,
       onAdd: handleFileChange,
@@ -71,6 +66,11 @@ gulp.task('watch', function () {
     })
   })
 })
+
+function handleFileChange (filepath) {
+  var whatChanged = 'src/' + filepath
+  gulp.series(compile(whatChanged), test, lint)(printDivider)
+}
 
 function printDivider () {
   var time = new Date().toTimeString().slice(0, 8)
