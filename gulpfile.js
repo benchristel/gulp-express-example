@@ -17,23 +17,11 @@ var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
 
-var browserifier = FastBrowserifier({
+var writeBundle = cachedBrowserify({
   src: ['.build_tmp/manifest.js'],
   dest: 'dist/public/js',
   outputFilename: 'browser.js'
 })
-
-function allTasks () {
-  return gulp.series(
-    clean,
-    compile(),
-    test,
-    lint,
-    writeManifest,
-    browserifier.writeBundle,
-    linkServer
-  )
-}
 
 var writeManifest = manifest({
   outputFilename: '.build_tmp/manifest.js',
@@ -45,6 +33,18 @@ var writeManifest = manifest({
   ]
 })
 
+function allTasks () {
+  return gulp.series(
+    clean,
+    compile(),
+    test,
+    lint,
+    writeManifest,
+    writeBundle,
+    linkServer
+  )
+}
+
 gulp.task('default', allTasks())
 
 gulp.task('check', gulp.series(compile(), test, lint))
@@ -52,15 +52,7 @@ gulp.task('check', gulp.series(compile(), test, lint))
 gulp.task('clean', clean)
 
 gulp.task('watch', function () {
-  gulp.series(
-    clean,
-    compile(),
-    test,
-    lint,
-    writeManifest,
-    browserifier.writeBundle,
-    linkServer
-  )(function () {
+  allTasks()(function () {
     var handleFileChange = function (filepath) {
       var whatChanged = 'src/' + filepath
       gulp.series(compile(whatChanged), test, lint)(printDivider)
@@ -76,7 +68,7 @@ gulp.task('watch', function () {
     })
 
     watch(['.build_tmp/object/app/**/*.js'], function () {
-      gulp.series(writeManifest, browserifier.writeBundle, linkServer)()
+      gulp.series(writeManifest, writeBundle, linkServer)()
     })
   })
 })
@@ -156,33 +148,20 @@ function prelude () {
   return file('prelude.js', contents)
 }
 
-function FastBrowserifier (options) {
+function cachedBrowserify (options) {
   /* see: https://github.com/gulpjs/gulp/blob/master/docs/recipes/fast-browserify-builds-with-watchify.md */
 
   var src = options.src
   var dest = options.dest
   var filename = options.outputFilename
 
-  var self = {
-    writeBundle: writeBundle
-  }
+  var browserifier = cache(browserify({
+    entries: src,
+    debug: true
+  }))
 
-  var browserifier = function () {
-    return browserify({
-      entries: src,
-      /* the debug: true option makes browserify generate sourcemaps */
-      debug: true
-    })
-  }
-
-  var watch = cache(browserifier())
-
-  watch.on('log', function (message) {
-    console.log(message)
-  })
-
-  function writeBundle () {
-    return watch.bundle()
+  return function browserifyBundle () {
+    return browserifier.bundle()
       .on('error', function (message) {
         console.log(message)
       })
@@ -190,8 +169,6 @@ function FastBrowserifier (options) {
       .pipe(buffer())
       .pipe(gulp.dest(dest))
   }
-
-  return self
 }
 
 function manifest (options) {
