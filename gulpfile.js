@@ -3,6 +3,7 @@
 var babel = require('gulp-babel')
 var browserify = require('browserify')
 var buffer = require('vinyl-buffer')
+var cache = require('browserify-file-cache')
 var concat = require('gulp-concat')
 var del = require('del')
 var esLint = require('gulp-eslint')
@@ -15,7 +16,6 @@ var pathUtils = require('path')
 var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
-var watchify = require('watchify')
 
 var browserifier = FastBrowserifier({
   src: ['.build_tmp/manifest.js'],
@@ -30,7 +30,7 @@ function allTasks () {
     test,
     lint,
     writeManifest,
-    browserifier.writeBundleWithoutWatching,
+    browserifier.writeBundle,
     linkServer
   )
 }
@@ -164,21 +164,18 @@ function FastBrowserifier (options) {
   var filename = options.outputFilename
 
   var self = {
-    writeBundle: writeBundle,
-    writeBundleWithoutWatching: writeBundleWithoutWatching
+    writeBundle: writeBundle
   }
 
   var browserifier = function () {
     return browserify({
       entries: src,
       /* the debug: true option makes browserify generate sourcemaps */
-      debug: true,
-      cache: {},
-      packageCache: {}
+      debug: true
     })
   }
 
-  var watch = watchify(browserifier())
+  var watch = cache(browserifier())
 
   watch.on('log', function (message) {
     console.log(message)
@@ -186,16 +183,6 @@ function FastBrowserifier (options) {
 
   function writeBundle () {
     return watch.bundle()
-      .on('error', function (message) {
-        console.log(message)
-      })
-      .pipe(source(filename))
-      .pipe(buffer())
-      .pipe(gulp.dest(dest))
-  }
-
-  function writeBundleWithoutWatching () {
-    return browserifier().bundle()
       .on('error', function (message) {
         console.log(message)
       })
