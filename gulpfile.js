@@ -6,11 +6,11 @@ var buffer = require('vinyl-buffer')
 var cache = require('browserify-file-cache')
 var concat = require('gulp-concat')
 var del = require('del')
-var esLint = require('gulp-eslint')
 var file = require('gulp-file')
 var gulp = require('gulp')
 var iife = require('gulp-iife')
 var jasmine = require('gulp-jasmine')
+var lint = require('gulp-task-standardjs-eslint')
 var manifest = require('gulp-task-js-manifest')
 var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
@@ -36,8 +36,7 @@ function allTasks () {
   return gulp.series(
     clean,
     compile(),
-    test,
-    //lint,
+    check(),
     writeManifest,
     writeBundle,
     linkServer
@@ -46,7 +45,7 @@ function allTasks () {
 
 gulp.task('default', allTasks())
 
-gulp.task('check', gulp.series(compile(), test))
+gulp.task('check', gulp.series(compile(), check()))
 
 gulp.task('clean', clean)
 
@@ -56,7 +55,7 @@ gulp.task('watch', function () {
       onChange: handleFileChange,
       onAdd: handleFileChange,
       onDelete: function (filepath) {
-        gulp.series(deleteObjectFile(filepath), test)(printDivider)
+        gulp.series(deleteObjectFile(filepath), check())(printDivider)
       },
       debounce: 50
     })
@@ -69,7 +68,7 @@ gulp.task('watch', function () {
 
 function handleFileChange (filepath) {
   var whatChanged = 'src/' + filepath
-  gulp.series(compile(whatChanged), test)(printDivider)
+  gulp.series(compile(whatChanged), check())(printDivider)
 }
 
 function printDivider () {
@@ -77,6 +76,10 @@ function printDivider () {
   var message = '==[finished at ' + time + ']'
 
   console.log(message + Array(80 - message.length).fill('=').join(''))
+}
+
+function check () {
+  return gulp.series(test, lint(['src/**/*.js', '*.js']))
 }
 
 function test () {
@@ -125,13 +128,6 @@ function linkServer () {
       .pipe(concat('server.js'))
     .pipe(sourceMaps.write())
     .pipe(gulp.dest('dist/'))
-}
-
-function lint () {
-  return gulp.src(['src/**/*.js', '*.js'])
-    .pipe(esLint())
-    .pipe(esLint.format('stylish', process.stdout))
-    .pipe(esLint.failAfterError())
 }
 
 function compileES2015 () {
