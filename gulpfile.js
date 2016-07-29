@@ -11,25 +11,25 @@ var gulp = require('gulp')
 var iife = require('gulp-iife')
 var jasmine = require('gulp-jasmine')
 var lint = require('gulp-task-standardjs-eslint')
-var manifest = require('gulp-task-js-manifest')
 var source = require('vinyl-source-stream')
 var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
+var glob = require('glob')
+var flatten = require('array-flatten')
+var map = require('map')
+var compose = require('fn-compose').ltr
+
+var globAll = compose(map(function (f) { return glob.sync(f) }), flatten)
 
 var writeBundle = cachedBrowserify({
-  src: ['.build_tmp/manifest.js'],
-  dest: 'dist/public/js',
-  outputFilename: 'browser.js'
-})
-
-var writeManifest = manifest({
-  outputFilename: '.build_tmp/manifest.js',
-  files: [
+  src: globAll([
     '.build_tmp/object/prelude.js',
     '.build_tmp/object/app/browser/**/!(main).js',
     '.build_tmp/object/app/shared/**/*.js',
     '.build_tmp/object/app/browser/main.js'
-  ]
+  ]),
+  dest: 'dist/public/js',
+  outputFilename: 'browser.js'
 })
 
 function allTasks () {
@@ -37,7 +37,6 @@ function allTasks () {
     clean,
     compile(),
     check(),
-    writeManifest,
     writeBundle,
     linkServer
   )
@@ -61,7 +60,7 @@ gulp.task('watch', function () {
     })
 
     watch(['.build_tmp/object/app/**/*.js'], function () {
-      gulp.series(writeManifest, writeBundle, linkServer)()
+      gulp.series(writeBundle, linkServer)()
     })
   })
 })
