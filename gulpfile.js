@@ -16,19 +16,9 @@ var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
 var glob = require('glob')
 var flatten = require('array-flatten')
-var compose = require('fn-compose').ltr
+var { compose, map } = require('futilities')
 
-function map (fn) {
-  return function (arrayLike) {
-    var output = []
-    for (var i = 0; i < arrayLike.length; i++) {
-      output.push(fn(arrayLike[i]))
-    }
-    return output
-  }
-}
-
-var globAll = compose(map(function (f) { return glob.sync(f) }), flatten)
+var globAll = compose(map(glob.sync), flatten)
 
 var writeBundle = cachedBrowserify({
   src: globAll([
