@@ -16,8 +16,17 @@ var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
 var glob = require('glob')
 var flatten = require('array-flatten')
-var map = require('map')
 var compose = require('fn-compose').ltr
+
+function map (fn) {
+  return function (arrayLike) {
+    var output = []
+    for (var i = 0; i < arrayLike.length; i++) {
+      output.push(fn(arrayLike[i]))
+    }
+    return output
+  }
+}
 
 var globAll = compose(map(function (f) { return glob.sync(f) }), flatten)
 
