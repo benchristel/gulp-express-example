@@ -16,7 +16,9 @@ var sourceMaps = require('gulp-sourcemaps')
 var watch = require('gulp-sane-watch')
 var glob = require('glob')
 var flatten = require('array-flatten')
-var { compose, map } = require('futilities')
+var futilities = require('futilities')
+var compose = futilities.compose
+var map = futilities.map
 
 var globAll = compose(map(glob.sync), flatten)
 
